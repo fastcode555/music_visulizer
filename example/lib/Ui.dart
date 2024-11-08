@@ -99,7 +99,7 @@ class _VisState extends State<PlaySong> {
                       child: Container(),
                     );
                   },
-                  id: playerID,
+                  sessionId: playerID,
                 )
               : selected == 'LineVisualizer'
                   ? Visualizer(
@@ -114,7 +114,7 @@ class _VisState extends State<PlaySong> {
                           child: Container(),
                         );
                       },
-                      id: playerID,
+                      sessionId: playerID,
                     )
                   : selected == 'LineBarVisualizer'
                       ? Visualizer(
@@ -129,7 +129,7 @@ class _VisState extends State<PlaySong> {
                               child: Container(),
                             );
                           },
-                          id: playerID,
+                          sessionId: playerID,
                         )
                       : selected == 'CircularLineVisualizer'
                           ? Visualizer(
@@ -144,7 +144,7 @@ class _VisState extends State<PlaySong> {
                                   child: Container(),
                                 );
                               },
-                              id: playerID,
+                              sessionId: playerID,
                             )
                           : selected == 'CircularBarVisualizer'
                               ? Visualizer(
@@ -159,7 +159,7 @@ class _VisState extends State<PlaySong> {
                                       child: Container(),
                                     );
                                   },
-                                  id: playerID,
+                                  sessionId: playerID,
                                 )
                               : Visualizer(
                                   builder: (BuildContext context, List<int> wave) {
@@ -173,7 +173,7 @@ class _VisState extends State<PlaySong> {
                                       child: Container(),
                                     );
                                   },
-                                  id: playerID,
+                                  sessionId: playerID,
                                 )
           : const Center(
               child: Text('No SessionID'),

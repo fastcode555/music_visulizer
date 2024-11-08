@@ -4,19 +4,26 @@ typedef void FftCallback(List<int> fftSamples);
 typedef void WaveformCallback(List<int> waveformSamples);
 
 class MusicVisulizerPlugin {
+  static Map<int, MusicVisulizerPlugin> plugins = {};
+
+  static MusicVisulizerPlugin? getPlugin(int sessionId) {
+    if (plugins.containsKey(sessionId)) {
+      return plugins[sessionId];
+    }
+    MusicVisulizerPlugin plugin = MusicVisulizerPlugin();
+    plugins[sessionId] = plugin;
+    plugin.activate(sessionId);
+    return plugin;
+  }
+
   final Set<FftCallback> _fftCallbacks = {};
   final Set<WaveformCallback> _waveformCallbacks = {};
   final channel = const MethodChannel('music_visulizer_plugin');
+  int? sessionID;
 
-  static MusicVisulizerPlugin? _instance;
-
-  factory MusicVisulizerPlugin() => _getInstance();
-
-  static MusicVisulizerPlugin get instance => _getInstance();
-
-  MusicVisulizerPlugin._internal() {
+  MusicVisulizerPlugin() {
     channel.setMethodCallHandler(
-      (MethodCall call) {
+          (MethodCall call) {
         switch (call.method) {
           case 'onFftVisualization':
             List<int> samples = call.arguments['fft'];
@@ -40,10 +47,9 @@ class MusicVisulizerPlugin {
     );
   }
 
-  static MusicVisulizerPlugin _getInstance() => _instance ??= MusicVisulizerPlugin._internal();
-
   void activate(int sessionID) {
-    channel.invokeMethod('activate_visualizer', {"sessionID": 118433});
+    this.sessionID = sessionID;
+    channel.invokeMethod('activate_visualizer', {"sessionID": sessionID});
   }
 
   void deactivate() {
@@ -52,6 +58,7 @@ class MusicVisulizerPlugin {
 
   void dispose() {
     deactivate();
+    plugins.remove(sessionID);
     _fftCallbacks.clear();
     _waveformCallbacks.clear();
   }
@@ -67,10 +74,12 @@ class MusicVisulizerPlugin {
   }
 
   void removeListener({
-    required FftCallback fftCallback,
+    FftCallback? fftCallback,
     required WaveformCallback waveformCallback,
   }) {
-    _fftCallbacks.remove(fftCallback);
+    if (fftCallback != null) {
+      _fftCallbacks.remove(fftCallback);
+    }
     _waveformCallbacks.remove(waveformCallback);
   }
 }
