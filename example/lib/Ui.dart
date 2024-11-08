@@ -89,6 +89,7 @@ class _VisState extends State<PlaySong> {
       body: playerID != null
           ? selected == 'MultiWaveVisualizer'
               ? Visualizer(
+                  key: ValueKey(playerID),
                   builder: (BuildContext context, List<int> wave) {
                     return CustomPaint(
                       painter: MultiWaveVisualizer(
@@ -103,6 +104,7 @@ class _VisState extends State<PlaySong> {
                 )
               : selected == 'LineVisualizer'
                   ? Visualizer(
+                      key: ValueKey(playerID),
                       builder: (BuildContext context, List<int> wave) {
                         return CustomPaint(
                           painter: LineVisualizer(
@@ -118,6 +120,7 @@ class _VisState extends State<PlaySong> {
                     )
                   : selected == 'LineBarVisualizer'
                       ? Visualizer(
+                          key: ValueKey(playerID),
                           builder: (BuildContext context, List<int> wave) {
                             return CustomPaint(
                               painter: LineBarVisualizer(
@@ -133,6 +136,7 @@ class _VisState extends State<PlaySong> {
                         )
                       : selected == 'CircularLineVisualizer'
                           ? Visualizer(
+                              key: ValueKey(playerID),
                               builder: (BuildContext context, List<int> wave) {
                                 return CustomPaint(
                                   painter: CircularLineVisualizer(
@@ -148,6 +152,7 @@ class _VisState extends State<PlaySong> {
                             )
                           : selected == 'CircularBarVisualizer'
                               ? Visualizer(
+                                  key: ValueKey(playerID),
                                   builder: (BuildContext context, List<int> wave) {
                                     return CustomPaint(
                                       painter: CircularBarVisualizer(
@@ -162,6 +167,7 @@ class _VisState extends State<PlaySong> {
                                   sessionId: playerID,
                                 )
                               : Visualizer(
+                                  key: ValueKey(playerID),
                                   builder: (BuildContext context, List<int> wave) {
                                     return CustomPaint(
                                       painter: BarVisualizer(

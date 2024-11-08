@@ -1,41 +1,77 @@
-import 'package:flutter/services.dart';
+import 'dart:async';
 
-typedef void FftCallback(List<int> fftSamples);
-typedef void WaveformCallback(List<int> waveformSamples);
+import 'package:flutter/services.dart';
+import 'package:music_visulizer_plugin/music_visualizer.dart';
+import 'package:rxdart/rxdart.dart';
+
+const _sessionIDKey = 'sessionID';
 
 class MusicVisulizerPlugin {
-  static Map<int, MusicVisulizerPlugin> plugins = {};
+  final BehaviorSubject<List<int>> _waveForm = BehaviorSubject<List<int>>();
 
-  static MusicVisulizerPlugin? getPlugin(int sessionId) {
-    if (plugins.containsKey(sessionId)) {
-      return plugins[sessionId];
+  ValueStream<List<int>> get waveForm => _waveForm.stream;
+
+  final BehaviorSubject<List<int>> _fftVisualizer = BehaviorSubject<List<int>>();
+
+  ValueStream<List<int>> get fftVisualizer => _fftVisualizer.stream;
+
+  final channel = const MethodChannel('music_visulizer_plugin');
+  final Map<int, MusicVisualizer> visualizers = {};
+
+  bool checkIsExist(int sessionId) => visualizers.containsKey(sessionId);
+
+  static MusicVisulizerPlugin? _instance;
+
+  factory MusicVisulizerPlugin() => _getInstance();
+
+  static MusicVisulizerPlugin get instance => _getInstance();
+
+  static MusicVisulizerPlugin _getInstance() => _instance ??= MusicVisulizerPlugin._internal();
+
+  MusicVisualizer createVisualizer(int sessionId) {
+    var visualizer = visualizers[sessionId];
+    if (visualizer == null) {
+      visualizer = MusicVisualizer(channel, sessionId);
+      visualizer.activate();
+      visualizers[sessionId] = visualizer;
     }
-    MusicVisulizerPlugin plugin = MusicVisulizerPlugin();
-    plugins[sessionId] = plugin;
-    plugin.activate(sessionId);
-    return plugin;
+    return visualizer;
   }
 
-  final Set<FftCallback> _fftCallbacks = {};
-  final Set<WaveformCallback> _waveformCallbacks = {};
-  final channel = const MethodChannel('music_visulizer_plugin');
-  int? sessionID;
+  void registerSessionId(int sessionID) {
+    if (!checkIsExist(sessionID)) {
+      disposeAll();
+      createVisualizer(sessionID);
+    }
+  }
 
-  MusicVisulizerPlugin() {
+  void removeVisualizer(int sessionId) {
+    final visualizer = visualizers.remove(sessionId);
+    visualizer?.dispose();
+  }
+
+  void disposeAll() {
+    if (visualizers.isEmpty) return;
+    visualizers.forEach((sessionID, visualizer) {
+      visualizer.dispose();
+    });
+  }
+
+  MusicVisulizerPlugin._internal() {
     channel.setMethodCallHandler(
           (MethodCall call) {
         switch (call.method) {
           case 'onFftVisualization':
             List<int> samples = call.arguments['fft'];
-            for (Function callback in _fftCallbacks) {
-              callback(samples);
-            }
+            int sessionId = call.arguments[_sessionIDKey];
+            final visualizer = visualizers[sessionId];
+            _fftVisualizer.add(samples);
             break;
           case 'onWaveformVisualization':
             List<int> samples = call.arguments['waveform'];
-            for (Function callback in _waveformCallbacks) {
-              callback(samples);
-            }
+            int sessionId = call.arguments[_sessionIDKey];
+            final visualizer = visualizers[sessionId];
+            _waveForm.add(samples);
             break;
           default:
             throw UnimplementedError(
@@ -45,41 +81,5 @@ class MusicVisulizerPlugin {
         return true as Future<bool>;
       },
     );
-  }
-
-  void activate(int sessionID) {
-    this.sessionID = sessionID;
-    channel.invokeMethod('activate_visualizer', {"sessionID": sessionID});
-  }
-
-  void deactivate() {
-    channel.invokeMethod('deactivate_visualizer');
-  }
-
-  void dispose() {
-    deactivate();
-    plugins.remove(sessionID);
-    _fftCallbacks.clear();
-    _waveformCallbacks.clear();
-  }
-
-  void addListener({
-    FftCallback? fftCallback,
-    required WaveformCallback waveformCallback,
-  }) {
-    if (null != fftCallback) {
-      _fftCallbacks.add(fftCallback);
-    }
-    _waveformCallbacks.add(waveformCallback);
-  }
-
-  void removeListener({
-    FftCallback? fftCallback,
-    required WaveformCallback waveformCallback,
-  }) {
-    if (fftCallback != null) {
-      _fftCallbacks.remove(fftCallback);
-    }
-    _waveformCallbacks.remove(waveformCallback);
   }
 }
